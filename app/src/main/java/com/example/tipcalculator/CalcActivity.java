@@ -3,9 +3,14 @@ package com.example.tipcalculator;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.text.NumberFormat;
+
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -18,6 +23,9 @@ public class CalcActivity extends AppCompatActivity {
     private TextView tv_total; // Поле для итоговой суммы
 
     private Calc tipCalc = new Calc();
+
+    private static final NumberFormat currencyFormat= NumberFormat.getCurrencyInstance();
+    private static final NumberFormat percentFormat = NumberFormat.getPercentInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,5 +41,48 @@ public class CalcActivity extends AppCompatActivity {
         tv_tip.setText("0.0");
         tv_total.setText("0.0");
 
+        et_amount.addTextChangedListener(amountTextWatcher);
+        sb_percent.setOnSeekBarChangeListener(sbListener);
     }
+
+    // Интерфейс слушателя изменений текста в EditText
+    private final TextWatcher amountTextWatcher = new TextWatcher() {
+        // Вызывается при изменении пользователем величины счета
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            if (s.toString().isEmpty()) {
+                amount = 0;
+                tv_tip.setText("0");
+                tv_total.setText("0");
+            } else {
+                amount = Double.parseDouble(s.toString());
+                // Обновление полей с чаевыми и общей суммой в формате денежной величины
+                tv_tip.setText(currencyFormat.format(tipCalc.calculateTip(amount, percent)));
+                tv_total.setText(currencyFormat.format(tipCalc.calculateTotal(amount, percent)));
+            }
+        }
+        @Override
+        public void afterTextChanged(Editable s) { }
+        @Override
+        public void beforeTextChanged(
+                CharSequence s, int start, int count, int after) { }
+    };
+
+    // Интерфейс слушателя изменений состояния SeekBar
+    private final SeekBar.OnSeekBarChangeListener sbListener = new SeekBar.OnSeekBarChangeListener() {
+        // Обновление процента чаевых и итоговой суммы
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            percent = progress / 100.0; // Назначение процента чаевых
+            // Вычисление чаевых и общей суммы. Вывод их на экран.
+            tv_percent.setText(percentFormat.format(percent));
+            tv_tip.setText(currencyFormat.format(tipCalc.calculateTip(amount,percent)));
+            tv_total.setText(currencyFormat.format(tipCalc.calculateTotal(amount, percent)));
+        }
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) { }
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) { }
+    };
+
 }
